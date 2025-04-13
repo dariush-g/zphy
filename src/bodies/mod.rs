@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::collisions::Collider;
+use crate::collisions::{Collider, ColliderShape};
 
 pub struct RigidBodyPlugin;
 
@@ -27,7 +27,7 @@ impl From<RigidbodyComponent> for RigidbodyType {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Velocity {
     pub linear: Vec3,
     pub angular: Vec3,
@@ -55,8 +55,8 @@ pub struct Damping {
 impl Default for Damping {
     fn default() -> Self {
         Self {
-            linear: 0.0,
-            angular: 0.0,
+            linear: 0.05,
+            angular: 0.05,
         }
     }
 }
@@ -75,6 +75,18 @@ pub struct RigidbodyComponent {
     pub restitution: f32,
 }
 
+fn cube_inertia_tensor(mass: f32, size: Vec3) -> Mat3 {
+    let w = size.x;
+    let h = size.y;
+    let d = size.z;
+
+    let ix = (1.0 / 12.0) * mass * (h * h + d * d);
+    let iy = (1.0 / 12.0) * mass * (w * w + d * d);
+    let iz = (1.0 / 12.0) * mass * (w * w + h * h);
+
+    Mat3::from_diagonal(Vec3::new(ix, iy, iz))
+}
+
 impl RigidbodyComponent {
     #[allow(clippy::too_many_arguments)]
     pub fn new_dynamic(
@@ -87,7 +99,10 @@ impl RigidbodyComponent {
         damping: Damping,
         restitution: f32,
     ) -> Self {
-        let inertia_tensor = Mat3::IDENTITY;
+        let mut inertia_tensor = Mat3::ZERO;
+        if collider.collider_shape == ColliderShape::Cuboid {
+            inertia_tensor = cube_inertia_tensor(mass, collider.half_extents * 2.);
+        }
 
         Self {
             state: RigidBodyState::Awake,
@@ -103,6 +118,32 @@ impl RigidbodyComponent {
         }
     }
 
+    pub fn new_static(collider: Collider) -> Self {
+        Self {
+            state: RigidBodyState::Awake,
+            rbt: RigidbodyType::Static,
+            inverse_mass: 0.,
+            friction: 0.,
+            velocity: Velocity::new(Vec3::ZERO, Vec3::ZERO),
+            torque: Vec3::ZERO,
+            damping: Damping::default(),
+            inverse_inertia_tensor: Mat3::ZERO,
+            restitution: 0.,
+            collider,
+        }
+    }
+
+    pub fn new_kinematic(mass: f32) -> Self {
+        todo!()
+        // Self {
+        // state: RigidBodyState::Awake,
+        // rbt: RigidbodyType::Kinematic,
+        // inverse_mass: 1. / mass,
+        // friction: 0.,
+
+        // }
+    }
+
     pub fn get_inverse_inertia_world(&self, rotation: &Quat) -> Mat3 {
         let rot_mat = Mat3::from_quat(*rotation);
         rot_mat * self.inverse_inertia_tensor * rot_mat.transpose()
@@ -111,21 +152,27 @@ impl RigidbodyComponent {
 
 fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, time: Res<Time>) {
     for (mut body, mut transform) in query.iter_mut() {
-        let acceleration = -9.18 / body.inverse_mass;
+        if body.rbt != RigidbodyType::Static {
+            let acceleration = -9.18 / body.inverse_mass;
 
-        let linear_damping = body.damping.linear;
-        let angular_damping = body.damping.angular;
-        body.velocity.linear *= 1. - linear_damping;
-        body.velocity.angular *= 1. - angular_damping;
+            let linear_damping = body.damping.linear;
+            let angular_damping = body.damping.angular;
+            body.velocity.linear *= 1. - linear_damping;
+            body.velocity.angular *= 1. - angular_damping;
 
-        body.velocity.linear.y += acceleration * time.delta_secs();
+            body.velocity.linear.y += acceleration * time.delta_secs();
 
-        transform.translation += body.velocity.linear * time.delta_secs();
-        transform.rotation = Quat::from_euler(
-            EulerRot::XYZ,
-            (body.torque.x + 1.) * body.velocity.angular.x * time.delta_secs(),
-            (body.torque.y + 1.) * body.velocity.angular.y * time.delta_secs(),
-            (body.torque.z + 1.) * body.velocity.angular.z * time.delta_secs(),
-        ) * transform.rotation;
+            transform.translation += body.velocity.linear * time.delta_secs();
+            // transform.rotation = Quat::from_euler(
+            //     EulerRot::XYZ,
+            //     (body.torque.x + 1.) * body.velocity.angular.x * time.delta_secs(),
+            //     (body.torque.y + 1.) * body.velocity.angular.y * time.delta_secs(),
+            //     (body.torque.z + 1.) * body.velocity.angular.z * time.delta_secs(),
+            // ) * transform.rotation;
+            transform.rotation *= Quat::from_axis_angle(
+                body.velocity.angular.normalize_or_zero(),
+                body.velocity.angular.length() * time.delta_secs(),
+            );
+        }
     }
 }
