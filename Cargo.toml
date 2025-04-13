@@ -1,0 +1,12 @@
+[package]
+name = "zphy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "*"
+
+
+[[bin]]
+name = "test"
+path = "src/tests/test.rs"
