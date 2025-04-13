@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::collisions::Collider;
+
 pub struct RigidBodyPlugin;
 
 impl Plugin for RigidBodyPlugin {
@@ -15,6 +17,16 @@ pub enum RigidbodyType {
     Kinematic,
 }
 
+impl From<RigidbodyComponent> for RigidbodyType {
+    fn from(value: RigidbodyComponent) -> Self {
+        match value.rbt {
+            RigidbodyType::Static => RigidbodyType::Static,
+            RigidbodyType::Dynamic => RigidbodyType::Dynamic,
+            RigidbodyType::Kinematic => RigidbodyType::Kinematic,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Velocity {
     pub linear: Vec3,
@@ -25,6 +37,13 @@ impl Velocity {
     pub fn new(linear: Vec3, angular: Vec3) -> Self {
         Self { linear, angular }
     }
+}
+
+#[derive(Clone, Default, Eq, PartialEq)]
+pub enum RigidBodyState {
+    Asleep,
+    #[default]
+    Awake,
 }
 
 #[derive(Copy, Clone)]
@@ -44,7 +63,9 @@ impl Default for Damping {
 
 #[derive(Component, Clone)]
 pub struct RigidbodyComponent {
+    pub state: RigidBodyState,
     pub rbt: RigidbodyType,
+    pub collider: Collider,
     pub velocity: Velocity,
     pub inverse_mass: f32,
     pub friction: f32,
@@ -55,8 +76,10 @@ pub struct RigidbodyComponent {
 }
 
 impl RigidbodyComponent {
+    #[allow(clippy::too_many_arguments)]
     pub fn new_dynamic(
         mass: f32,
+        collider: Collider,
         friction: f32,
         velocity: Vec3,
         angular_velocity: Vec3,
@@ -67,7 +90,9 @@ impl RigidbodyComponent {
         let inertia_tensor = Mat3::IDENTITY;
 
         Self {
+            state: RigidBodyState::Awake,
             rbt: RigidbodyType::Dynamic,
+            collider,
             inverse_mass: 1. / mass,
             friction,
             velocity: Velocity::new(velocity, angular_velocity),
