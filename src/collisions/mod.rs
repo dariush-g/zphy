@@ -27,6 +27,23 @@ fn update_vertices(mut query: Query<(&mut RigidbodyComponent, &Transform)>) {
     }
 }
 
+fn rotation_to_align(from: Vec3, to: Vec3) -> Quat {
+    let from = from.normalize();
+    let to = to.normalize();
+    let axis = from.cross(to);
+    let angle = from.angle_between(to);
+    if axis.length_squared() < 1e-6 {
+        if from.dot(to) < 0.0 {
+            // Rotate 180° around any perpendicular axis
+            Quat::from_axis_angle(Vec3::X, std::f32::consts::PI)
+        } else {
+            Quat::IDENTITY
+        }
+    } else {
+        Quat::from_axis_angle(axis.normalize(), angle)
+    }
+}
+
 fn detect_collisions(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>) {
     let mut items: Vec<_> = query.iter_mut().collect();
 
@@ -42,8 +59,7 @@ fn detect_collisions(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>
                 &body_b.collider,
                 &body_b.velocity,
             ) {
-                println!("COLLISION DETECTED:\n{:?}", collision_data);
-
+                //println!("COLLISION DETECTED:\n{:?}", collision_data);
                 resolve_collision(body_a, transform_a, body_b, transform_b, &collision_data);
             }
         }
@@ -58,48 +74,42 @@ fn resolve_collision(
     contact: &ContactInfo,
 ) {
     let total_inverse_mass = a.inverse_mass + b.inverse_mass;
+
     if total_inverse_mass == 0.0 {
-        return; // both static/kinematic
+        return;
     }
 
-    // --- Positional correction (penetration resolution) ---
-    let correction = contact.normal * (contact.penetration_depth / total_inverse_mass) * 1.;
+    let correction = contact.normal * (contact.penetration_depth / total_inverse_mass);
+
+    let temp_vel = a.velocity.linear;
 
     if a.inverse_mass > 0.0 {
+        //todo: if the vel of the rb is < 0.2, make it sleep so that it does not keep rubberbanding and jittering
         a.collider.center += correction * a.inverse_mass;
+        a.velocity.linear = Vec3::ZERO;
+        a.velocity.angular = Vec3::ZERO;
+        a.velocity.linear += a.restitution * (contact.normal + temp_vel) * (1. - a.damping.linear)
+            + contact.b_vel.linear;
         tf_a.translation = a.collider.center;
     }
 
+    if b.rbt == RigidbodyType::Static {
+        let local_down = Vec3::Y;
+        let world_down = tf_a.rotation * local_down;
+        let align_rotation: Vec3 = rotation_to_align(world_down, contact.normal)
+            .to_euler(EulerRot::XYZ)
+            .into();
+        a.velocity.angular += align_rotation * a.inverse_mass * a.velocity.linear.length().max(6.5);
+    }
+
     if b.inverse_mass > 0.0 && b.rbt != RigidbodyType::Static {
-        b.collider.center -= correction * b.inverse_mass;
+        b.collider.center += correction * b.inverse_mass;
+        b.velocity.linear = Vec3::ZERO;
+        b.velocity.angular = Vec3::ZERO;
+        b.velocity.linear -= b.restitution * (contact.normal + temp_vel) * (1. - b.damping.linear)
+            + contact.a_vel.linear;
         tf_b.translation = b.collider.center;
     }
-
-    // --- Impulse resolution (velocity) ---
-    let relative_velocity = b.velocity.linear - a.velocity.linear;
-    let vel_along_normal = relative_velocity.dot(contact.normal);
-
-    if vel_along_normal > 0.0 {
-        return; // they are moving apart, no collision to resolve
-    }
-
-    let restitution = a.restitution.min(b.restitution);
-    let impulse_scalar = -(1.0 + restitution) * vel_along_normal / total_inverse_mass;
-    let impulse = impulse_scalar * contact.normal;
-
-    let r_a = contact.contact_point_a - a.collider.center;
-    let angular_impulse_a = r_a.cross(impulse);
-
-    if a.inverse_mass > 0.0 {
-        a.velocity.angular += a.inverse_inertia_tensor * angular_impulse_a;
-        a.velocity.linear -= impulse * a.inverse_mass;
-    }
-
-    if b.inverse_mass > 0.0 && b.rbt != RigidbodyType::Static {
-        b.velocity.linear += impulse * b.inverse_mass;
-    }
-
-    // Optional: angular/rotational effects, friction, or damping here
 }
 
 fn project_collider(collider: &Collider, axis: Vec3) -> (f32, f32) {
@@ -136,7 +146,7 @@ fn get_collision_info(
 
         let overlap = get_overlap(min_a, max_a, min_b, max_b);
         if overlap <= 0.0 {
-            return None; // Separating axis found
+            return None;
         }
 
         if overlap < min_overlap {

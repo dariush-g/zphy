@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 use zphy::{
     bodies::{Damping, RigidbodyComponent},
@@ -25,7 +23,7 @@ pub(crate) fn rigid_body_test(
             Collider::from_cuboid(
                 cuboid.half_size,
                 Vec3::ZERO,
-                Quat::from_euler(EulerRot::XYZ, 0., 0., 0.),
+                Quat::from_euler(EulerRot::XYZ, 0., 100., 0.),
             ),
             0.,
             Vec3::ZERO,
@@ -40,7 +38,7 @@ pub(crate) fn rigid_body_test(
 
     let cuboid = Cuboid::new(10., 1., 10.);
 
-    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, std::f32::consts::FRAC_PI_8); // rotate 45° around Z axis
+    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, std::f32::consts::FRAC_PI_4); // 45°
     let position = Vec3::new(0.0, -5.0, 0.0);
 
     commands.spawn((

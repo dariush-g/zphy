@@ -149,30 +149,32 @@ impl RigidbodyComponent {
         rot_mat * self.inverse_inertia_tensor * rot_mat.transpose()
     }
 }
-
 fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, time: Res<Time>) {
+    let gravity = Vec3::new(0.0, -9.81, 0.0);
+
     for (mut body, mut transform) in query.iter_mut() {
-        if body.rbt != RigidbodyType::Static {
-            let acceleration = -9.18 / body.inverse_mass;
-
-            let linear_damping = body.damping.linear;
-            let angular_damping = body.damping.angular;
-            body.velocity.linear *= 1. - linear_damping;
-            body.velocity.angular *= 1. - angular_damping;
-
-            body.velocity.linear.y += acceleration * time.delta_secs();
-
-            transform.translation += body.velocity.linear * time.delta_secs();
-            // transform.rotation = Quat::from_euler(
-            //     EulerRot::XYZ,
-            //     (body.torque.x + 1.) * body.velocity.angular.x * time.delta_secs(),
-            //     (body.torque.y + 1.) * body.velocity.angular.y * time.delta_secs(),
-            //     (body.torque.z + 1.) * body.velocity.angular.z * time.delta_secs(),
-            // ) * transform.rotation;
-            transform.rotation *= Quat::from_axis_angle(
-                body.velocity.angular.normalize_or_zero(),
-                body.velocity.angular.length() * time.delta_secs(),
-            );
+        if body.rbt == RigidbodyType::Static {
+            continue;
         }
+
+        let linear_damping = body.damping.linear;
+        let angular_damping = body.damping.angular;
+        body.velocity.linear *= 1.0 - linear_damping;
+        body.velocity.angular *= 1.0 - angular_damping;
+
+        let inverse_mass = body.inverse_mass;
+        body.velocity.linear += gravity * inverse_mass * time.delta_secs();
+
+        transform.translation += body.velocity.linear * time.delta_secs();
+
+        let angular_speed = body.velocity.angular.length();
+        if angular_speed > 0.01 {
+            let rotation_axis = body.velocity.angular.normalize();
+            let delta_rotation =
+                Quat::from_axis_angle(rotation_axis, angular_speed * time.delta_secs());
+            transform.rotation = (delta_rotation * transform.rotation).normalize();
+        }
+
+        body.collider.center = transform.translation;
     }
 }
