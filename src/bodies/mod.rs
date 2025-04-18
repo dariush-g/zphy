@@ -37,6 +37,11 @@ impl Velocity {
     pub fn new(linear: Vec3, angular: Vec3) -> Self {
         Self { linear, angular }
     }
+
+    pub const ZERO: Self = Self {
+        linear: Vec3::ZERO,
+        angular: Vec3::ZERO,
+    };
 }
 
 #[derive(Clone, Default, Eq, PartialEq)]
@@ -133,15 +138,19 @@ impl RigidbodyComponent {
         }
     }
 
-    pub fn new_kinematic(mass: f32) -> Self {
-        todo!()
-        // Self {
-        // state: RigidBodyState::Awake,
-        // rbt: RigidbodyType::Kinematic,
-        // inverse_mass: 1. / mass,
-        // friction: 0.,
-
-        // }
+    pub fn new_kinematic(mass: f32, collider: Collider) -> Self {
+        Self {
+            state: RigidBodyState::Awake,
+            rbt: RigidbodyType::Kinematic,
+            inverse_mass: 1. / mass,
+            friction: 0.,
+            collider,
+            velocity: Velocity::ZERO,
+            torque: Vec3::ZERO,
+            damping: Damping::default(),
+            inverse_inertia_tensor: Mat3::ZERO,
+            restitution: 0.,
+        }
     }
 
     pub fn get_inverse_inertia_world(&self, rotation: &Quat) -> Mat3 {
@@ -149,6 +158,7 @@ impl RigidbodyComponent {
         rot_mat * self.inverse_inertia_tensor * rot_mat.transpose()
     }
 }
+
 fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, time: Res<Time>) {
     let gravity = Vec3::new(0.0, -9.81, 0.0);
 

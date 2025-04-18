@@ -60,6 +60,7 @@ fn detect_collisions(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>
                 &body_b.velocity,
             ) {
                 //println!("COLLISION DETECTED:\n{:?}", collision_data);
+
                 resolve_collision(body_a, transform_a, body_b, transform_b, &collision_data);
             }
         }
@@ -102,11 +103,11 @@ fn resolve_collision(
         a.velocity.angular += align_rotation * a.inverse_mass * a.velocity.linear.length().max(6.5);
     }
 
-    if b.inverse_mass > 0.0 && b.rbt != RigidbodyType::Static {
+    if b.inverse_mass > 0.0 && b.rbt == RigidbodyType::Dynamic {
         b.collider.center += correction * b.inverse_mass;
         b.velocity.linear = Vec3::ZERO;
         b.velocity.angular = Vec3::ZERO;
-        b.velocity.linear -= b.restitution * (contact.normal + temp_vel) * (1. - b.damping.linear)
+        b.velocity.linear += b.restitution * (contact.normal + temp_vel) * (1. - b.damping.linear)
             + contact.a_vel.linear;
         tf_b.translation = b.collider.center;
     }
