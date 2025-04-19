@@ -94,7 +94,7 @@ fn resolve_collision(
         tf_a.translation = a.collider.center;
     }
 
-    if b.rbt == RigidbodyType::Static {
+    if b.rbt == RigidbodyType::Static && a.rbt == RigidbodyType::Dynamic {
         let local_down = Vec3::Y;
         let world_down = tf_a.rotation * local_down;
         let align_rotation: Vec3 = rotation_to_align(world_down, contact.normal)
@@ -103,7 +103,7 @@ fn resolve_collision(
         a.velocity.angular += align_rotation * a.inverse_mass * a.velocity.linear.length().max(6.5);
     }
 
-    if b.inverse_mass > 0.0 && b.rbt == RigidbodyType::Dynamic {
+    if b.inverse_mass > 0.0 {
         b.collider.center += correction * b.inverse_mass;
         b.velocity.linear = Vec3::ZERO;
         b.velocity.angular = Vec3::ZERO;
