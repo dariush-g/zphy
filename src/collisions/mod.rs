@@ -59,8 +59,7 @@ fn detect_collisions(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>
                 &body_b.collider,
                 &body_b.velocity,
             ) {
-                //println!("COLLISION DETECTED:\n{:?}", collision_data);
-
+                println!("Collision detected! Normal: {:?}, Penetration: {}", collision_data.normal, collision_data.penetration_depth);
                 resolve_collision(body_a, transform_a, body_b, transform_b, &collision_data);
             }
         }

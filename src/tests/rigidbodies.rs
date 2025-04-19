@@ -4,6 +4,9 @@ use zphy::{
     collisions::Collider,
 };
 
+#[derive(Component)]
+pub struct X;
+
 pub(crate) fn rigid_body_test(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -17,7 +20,8 @@ pub(crate) fn rigid_body_test(
 
     commands.spawn(PointLight::default());
 
-    commands.spawn((
+    commands.spawn(
+       ( X,
         RigidbodyComponent::new_dynamic(
             0.5,
             Collider::from_cuboid(
@@ -27,14 +31,14 @@ pub(crate) fn rigid_body_test(
             ),
             0.,
             Vec3::ZERO,
-            Vec3::new(0., 0., 0.),
+            Vec3::new(1., 0.3, 0.5),
             Vec3::ZERO,
             Damping::default(),
             0.0,
         ),
         Mesh3d(meshes.add(cuboid)),
-        MeshMaterial3d(materials.add(Color::WHITE)),
-    ));
+        MeshMaterial3d(materials.add(Color::WHITE)),)
+    );
 
     let cuboid = Cuboid::new(10., 1., 10.);
 
