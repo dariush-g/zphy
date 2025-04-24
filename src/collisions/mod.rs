@@ -93,7 +93,7 @@ fn resolve_collision(
         tf_a.translation = a.collider.center;
     }
 
-    if b.rbt == RigidbodyType::Static && a.rbt == RigidbodyType::Dynamic {
+    if a.rbt == RigidbodyType::Dynamic {
         let local_down = Vec3::Y;
         let world_down = tf_a.rotation * local_down;
         let align_rotation: Vec3 = rotation_to_align(world_down, contact.normal)
