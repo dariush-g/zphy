@@ -8,7 +8,7 @@ impl Plugin for CollisionPlugin {
     }
 }
 
-fn update_vertices(mut query: Query<(&mut RigidbodyComponent, &Transform)>) {
+fn update_vertices(mut query: Query<(&mut RigidbodyComponent, &Transform), With<RigidbodyComponent>>) {
     for (mut body, transform) in query.iter_mut() {
         body.collider.center = transform.translation;
 
