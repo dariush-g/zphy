@@ -83,7 +83,7 @@ fn resolve_collision(
 
     let temp_vel = a.velocity.linear;
 
-    if a.inverse_mass > 0.0 {
+    if a.rbt != RigidbodyType::Static {
         //todo: if the vel of the rb is < 0.2, make it sleep so that it does not keep rubberbanding and jittering
         a.collider.center += correction * a.inverse_mass;
         a.velocity.linear = Vec3::ZERO;
@@ -102,7 +102,7 @@ fn resolve_collision(
         a.velocity.angular += align_rotation * a.inverse_mass * a.velocity.linear.length().max(6.5);
     }
 
-    if b.inverse_mass > 0.0 {
+    if  b.rbt != RigidbodyType::Static  {
         b.collider.center += correction * b.inverse_mass;
         b.velocity.linear = Vec3::ZERO;
         b.velocity.angular = Vec3::ZERO;
