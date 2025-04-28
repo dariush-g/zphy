@@ -8,7 +8,9 @@ impl Plugin for CollisionPlugin {
     }
 }
 
-fn update_vertices(mut query: Query<(&mut RigidbodyComponent, &Transform), With<RigidbodyComponent>>) {
+fn update_vertices(
+    mut query: Query<(&mut RigidbodyComponent, &Transform), With<RigidbodyComponent>>,
+) {
     for (mut body, transform) in query.iter_mut() {
         body.collider.center = transform.translation;
 
@@ -59,7 +61,10 @@ fn detect_collisions(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>
                 &body_b.collider,
                 &body_b.velocity,
             ) {
-                println!("Collision detected! Normal: {:?}, Penetration: {}", collision_data.normal, collision_data.penetration_depth);
+                println!(
+                    "Collision detected! Normal: {:?}, Penetration: {}",
+                    collision_data.normal, collision_data.penetration_depth
+                );
                 resolve_collision(body_a, transform_a, body_b, transform_b, &collision_data);
             }
         }
@@ -74,7 +79,6 @@ fn resolve_collision(
     contact: &ContactInfo,
 ) {
     let total_inverse_mass = a.inverse_mass + b.inverse_mass;
-
     if total_inverse_mass == 0.0 {
         return;
     }
@@ -84,7 +88,6 @@ fn resolve_collision(
     let temp_vel = a.velocity.linear;
 
     if a.rbt != RigidbodyType::Static {
-        //todo: if the vel of the rb is < 0.2, make it sleep so that it does not keep rubberbanding and jittering
         a.collider.center += correction * a.inverse_mass;
         a.velocity.linear = Vec3::ZERO;
         a.velocity.angular = Vec3::ZERO;
@@ -99,10 +102,11 @@ fn resolve_collision(
         let align_rotation: Vec3 = rotation_to_align(world_down, contact.normal)
             .to_euler(EulerRot::XYZ)
             .into();
+        println!("!!!");
         a.velocity.angular += align_rotation * a.inverse_mass * a.velocity.linear.length().max(6.5);
     }
 
-    if  b.rbt != RigidbodyType::Static  {
+    if b.rbt != RigidbodyType::Static {
         b.collider.center += correction * b.inverse_mass;
         b.velocity.linear = Vec3::ZERO;
         b.velocity.angular = Vec3::ZERO;

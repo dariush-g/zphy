@@ -20,8 +20,8 @@ pub(crate) fn rigid_body_test(
 
     commands.spawn(PointLight::default());
 
-    commands.spawn(
-       ( X,
+    commands.spawn((
+        X,
         RigidbodyComponent::new_dynamic(
             0.5,
             Collider::from_cuboid(
@@ -37,8 +37,8 @@ pub(crate) fn rigid_body_test(
             0.0,
         ),
         Mesh3d(meshes.add(cuboid)),
-        MeshMaterial3d(materials.add(Color::WHITE)),)
-    );
+        MeshMaterial3d(materials.add(Color::WHITE)),
+    ));
 
     let cuboid = Cuboid::new(10., 1., 10.);
 
