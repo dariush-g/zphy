@@ -1,5 +1,6 @@
 use crate::prelude::RigidbodyComponent;
 use bevy::prelude::*;
+use bevy::render::render_resource::ShaderType;
 
 /// The main struct for a Joint that holds different types of constraints
 #[derive(Component, Clone, Debug)]
@@ -40,6 +41,10 @@ pub struct MemberLimit<N> {
 
 impl MemberLimit<Vec3> {
     pub fn new(min: Vec3, max: Vec3) -> Self {
+        if min.size() < max.size() {
+            panic!()
+        }
+
         Self { min, max }
     }
 
@@ -63,15 +68,14 @@ impl Joint {
 
     // Apply force to enforce the joint's constraint
     pub fn enforce(
-        &self,
-        query: &mut Query<(&mut RigidbodyComponent, &mut Transform)>,
+        mut query: Query<(&mut Joint, &mut RigidbodyComponent, &mut Transform)>,
         time: Res<Time>,
     ) {
-        if let Ok((mut rb, mut transform)) = query.get_mut(self.member.entity) {
-            match self.joint_type {
-                JointType::BallSocket => self.enforce_ball_socket(&mut rb, &mut transform),
-                JointType::Slider => self.enforce_slider(&mut rb, &mut transform),
-                JointType::Hinge => self.enforce_hinge(&mut rb, &mut transform),
+        if let Ok((joint, mut rb, mut transform)) = query.get_single_mut() {
+            match joint.joint_type {
+                JointType::BallSocket => joint.enforce_ball_socket(&mut rb, &mut transform),
+                JointType::Slider => joint.enforce_slider(&mut rb, &mut transform),
+                JointType::Hinge => joint.enforce_hinge(&mut rb, &mut transform),
             }
         }
     }
@@ -101,6 +105,7 @@ impl Joint {
 
     fn enforce_hinge(&self, rb: &mut RigidbodyComponent, transform: &mut Transform) {
         // Hinge constraint: Allow rotation around one axis, no translation along that axis
+        rb.velocity.linear = Vec3::ZERO;
 
         let direction = transform.translation; // Axis for rotation
         let limit = self.member.limits.clone(); // Assume limits
