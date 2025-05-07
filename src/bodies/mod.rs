@@ -160,7 +160,7 @@ impl RigidbodyComponent {
 }
 
 fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, time: Res<Time>) {
-    let gravity = Vec3::new(0.0, -9.81, 0.0);
+    let gravity = -9.81;
 
     for (mut body, mut transform) in query.iter_mut() {
         if body.rbt == RigidbodyType::Static {
@@ -169,13 +169,14 @@ fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, tim
 
         let linear_damping = body.damping.linear;
         let angular_damping = body.damping.angular;
-        body.velocity.linear *= 1.0 - linear_damping;
-        body.velocity.angular *= 1.0 - angular_damping;
+        body.velocity.linear *= 1.0 - linear_damping * time.delta_secs();
+        body.velocity.angular *= 1.0 - angular_damping * time.delta_secs();
 
         let inverse_mass = body.inverse_mass;
-        body.velocity.linear += gravity * (1. / inverse_mass) * time.delta_secs();
 
-        transform.translation += body.velocity.linear * time.delta_secs();
+        transform.translation.x += body.velocity.linear.x * time.delta_secs();
+        transform.translation.z += body.velocity.linear.z * time.delta_secs();
+        body.velocity.linear.y += gravity * (1. / inverse_mass) * time.delta_secs();
 
         let angular_speed = body.velocity.angular.length();
         if angular_speed > 0.01 {
