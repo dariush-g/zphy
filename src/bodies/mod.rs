@@ -186,6 +186,8 @@ fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, tim
         }
 
         body.collider.center = transform.translation;
-        transform.rotation = body.collider.rotation;
+        if body.rbt == RigidbodyType::Dynamic {
+            transform.rotation = body.collider.rotation;
+        }
     }
 }
