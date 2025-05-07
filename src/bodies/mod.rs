@@ -173,7 +173,7 @@ fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, tim
         body.velocity.angular *= 1.0 - angular_damping;
 
         let inverse_mass = body.inverse_mass;
-        body.velocity.linear += gravity * inverse_mass * time.delta_secs();
+        body.velocity.linear.y += gravity.y * (1. / inverse_mass) * time.delta_secs();
 
         transform.translation += body.velocity.linear * time.delta_secs();
 

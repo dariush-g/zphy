@@ -8,7 +8,6 @@ path = "src/lib.rs"
 
 [dependencies]
 bevy = "*"
-itertools = "0.14.0"
 
 
 [[bin]]
