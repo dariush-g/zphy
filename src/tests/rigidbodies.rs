@@ -27,7 +27,7 @@ pub(crate) fn rigid_body_test(
             Collider::from_cuboid(
                 cuboid.half_size,
                 Vec3::ZERO,
-                Quat::from_euler(EulerRot::XYZ, 0., 100., 0.),
+                Quat::from_euler(EulerRot::XYZ, 0., 1., 0.),
             ),
             0.,
             Vec3::ZERO,

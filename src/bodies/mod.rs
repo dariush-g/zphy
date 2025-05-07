@@ -182,7 +182,7 @@ fn apply_forces(mut query: Query<(&mut RigidbodyComponent, &mut Transform)>, tim
             let rotation_axis = body.velocity.angular.normalize();
             let delta_rotation =
                 Quat::from_axis_angle(rotation_axis, angular_speed * time.delta_secs());
-            transform.rotation = (delta_rotation * transform.rotation).normalize();
+            body.collider.rotation = (delta_rotation * body.collider.rotation).normalize();
         }
 
         body.collider.center = transform.translation;

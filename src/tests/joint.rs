@@ -13,7 +13,7 @@ pub(crate) fn joint_test(
         .insert(Transform::from_xyz(-5.0, 5.0, -5.0).looking_at(Vec3::ZERO, Vec3::Y));
 
     let cuboid = Cuboid::new(10., 1., 10.);
-    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 0.);
+    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 1.);
     let position = Vec3::new(0.0, -5.0, 0.0);
 
     commands.spawn((
@@ -54,7 +54,7 @@ pub(crate) fn joint_test(
     //     .id();
 
     let cuboid = Cuboid::new(5., 1., 1.);
-    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 0.);
+    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 1.);
     let position = Vec3::new(0.0, 0.0, -1.0);
 
     let p1 = commands
@@ -73,7 +73,6 @@ pub(crate) fn joint_test(
             MeshMaterial3d(mats.add(Color::WHITE)),
             Transform {
                 translation: position,
-                rotation,
                 ..Default::default()
             },
         ))

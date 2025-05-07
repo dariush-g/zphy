@@ -1,4 +1,5 @@
 mod collider_systems;
+
 use crate::bodies::Velocity;
 use bevy::prelude::*;
 use collider_systems::{detect_collisions, update_vertices};
