@@ -52,10 +52,10 @@ pub(crate) fn detect_collisions(mut query: Query<(&mut RigidbodyComponent, &mut 
                 &body_b.collider,
                 &body_b.velocity,
             ) {
-                println!(
-                    "Collision detected! Normal: {:?}, Penetration: {}",
-                    collision_data.normal, collision_data.penetration_depth
-                );
+                // println!(
+                //     "collision -- normal: {:?}, penetration: {}",
+                //     collision_data.normal, collision_data.penetration_depth
+                // );
                 resolve_collision(body_a, transform_a, body_b, transform_b, &collision_data);
             }
         }
@@ -78,7 +78,10 @@ fn resolve_collision(
 
     let temp_vel = a.velocity.linear;
 
+    let ground_threshold = 0.7;
+
     if a.rbt != RigidbodyType::Static {
+        a.grounded = contact.normal.dot(Vec3::Y) > ground_threshold;
         a.collider.center += correction * a.inverse_mass;
         if a.rbt == RigidbodyType::Static {
             a.velocity.linear = Vec3::ZERO;
@@ -101,6 +104,7 @@ fn resolve_collision(
     }
 
     if b.rbt != RigidbodyType::Static {
+        b.grounded = contact.normal.dot(Vec3::Y) > ground_threshold;
         b.collider.center += correction * b.inverse_mass;
         if b.rbt == RigidbodyType::Static {
             b.velocity.linear = Vec3::ZERO;

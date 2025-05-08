@@ -78,6 +78,7 @@ pub struct RigidbodyComponent {
     pub damping: Damping,
     pub inverse_inertia_tensor: Mat3,
     pub restitution: f32,
+    pub grounded: bool,
 }
 
 fn cube_inertia_tensor(mass: f32, size: Vec3) -> Mat3 {
@@ -120,6 +121,7 @@ impl RigidbodyComponent {
             damping,
             inverse_inertia_tensor: inertia_tensor.inverse(),
             restitution,
+            grounded: false,
         }
     }
 
@@ -135,6 +137,7 @@ impl RigidbodyComponent {
             inverse_inertia_tensor: Mat3::ZERO,
             restitution: 0.,
             collider,
+            grounded: false,
         }
     }
 
@@ -150,6 +153,7 @@ impl RigidbodyComponent {
             damping: Damping::default(),
             inverse_inertia_tensor: Mat3::ZERO,
             restitution: 0.,
+            grounded: false,
         }
     }
 
