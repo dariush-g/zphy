@@ -143,7 +143,7 @@ impl RigidbodyComponent {
             state: RigidBodyState::Awake,
             rbt: RigidbodyType::Kinematic,
             inverse_mass: 1. / mass,
-            friction: 0.3,
+            friction: 0.1,
             collider,
             velocity: Velocity::ZERO,
             torque: Vec3::ZERO,
