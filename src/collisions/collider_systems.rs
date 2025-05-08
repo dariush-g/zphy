@@ -80,7 +80,10 @@ fn resolve_collision(
 
     if a.rbt != RigidbodyType::Static {
         a.collider.center += correction * a.inverse_mass;
-        a.velocity.linear = Vec3::ZERO;
+        if a.rbt == RigidbodyType::Static {
+            a.velocity.linear = Vec3::ZERO;
+        }
+        a.velocity.linear *= 1. - a.friction;
         a.velocity.angular = Vec3::ZERO;
         a.velocity.linear += a.restitution * (contact.normal + temp_vel) * (1. - a.damping.linear)
             + contact.b_vel.linear;
@@ -99,8 +102,11 @@ fn resolve_collision(
 
     if b.rbt != RigidbodyType::Static {
         b.collider.center += correction * b.inverse_mass;
-        b.velocity.linear = Vec3::ZERO;
+        if b.rbt == RigidbodyType::Static {
+            b.velocity.linear = Vec3::ZERO;
+        }
         b.velocity.angular = Vec3::ZERO;
+        b.velocity.linear *= 1. - b.friction;
         b.velocity.linear += b.restitution * (contact.normal + temp_vel) * (1. - b.damping.linear)
             + contact.a_vel.linear;
         tf_b.translation = b.collider.center;
