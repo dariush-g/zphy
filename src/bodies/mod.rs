@@ -161,6 +161,10 @@ impl RigidbodyComponent {
         self.grounded
     }
 
+    pub fn set_grounded(&mut self, grounded: bool) {
+        self.grounded = grounded;
+    }
+
     pub fn get_inverse_inertia_world(&self, rotation: &Quat) -> Mat3 {
         let rot_mat = Mat3::from_quat(*rotation);
         rot_mat * self.inverse_inertia_tensor * rot_mat.transpose()
